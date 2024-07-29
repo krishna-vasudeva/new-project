@@ -2,9 +2,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "node server.js",
-    "start": "npm run docker:up && npm run dev",
-    "docker:up": "docker-compose up -d && npm run wait-for-app",
-    "wait-for-app": "node -e \"setTimeout(() => console.log('Application is ready'), 10000)\""
+    "start": "node server.js"
   },
   "dependencies": {
     "@prisma/client": "^5.17.0",
