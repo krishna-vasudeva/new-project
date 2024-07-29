@@ -1,6 +1,6 @@
-import express, { response, urlencoded } from "express";
-import { engine } from "express-handlebars";
-import {
+const express = require("express");
+const { engine } = require("express-handlebars");
+const {
   connectToDatabase,
   createAttendanceTable,
   createRecordsTable,
@@ -25,28 +25,33 @@ import {
   uploadStudentImage,
   uploadTeacherImage,
   viewAttendence,
-} from "./query.js";
-import "dotenv/config";
-import { error } from "console";
-import { errorHandler } from "./errorHandler.js";
-import cors from "cors";
-import multer from "multer";
+} = require("./query");
+require("dotenv").config();
+const { error } = require("console");
+const errorHandler = require("./errorHandler");
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const { v4: uuidv4 } = require("uuid");
+// const { urid: uuidv4 } = require("uuid");
+
+
+
 const app = express();
 const port = process.env.PORT || 5000;
 // const exphbs = engine;
-import path from "path";
-import urid from "urid";
+
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// connectToDatabase()
-//   .then(() => {
-//     console.log("Connected to Database");
-//   })
-//   .catch((err) => {
-//     console.error("Error while connecting to database:", err);
-//   });
+connectToDatabase()
+  .then(() => {
+    console.log("Connected to Database");
+  })
+  .catch((err) => {
+    console.error("Error while connecting to database:", err);
+  });
 
 // createStudentTable()
 //   .then(() => {
@@ -85,14 +90,14 @@ app.use(express.json());
 //     console.error("Error while creating subject table", err);
 //   });
 
-createAttendanceTable()
-  .then((res) => {
-    console.log("Attendence table created successfully.!");
-  })
-  .catch((err) => {
-    console.log("Error while creating attendence table", err);
-  });
-// // createRecordsTable()
+// createAttendanceTable()
+//   .then((res) => {
+//     console.log("Attendence table created successfully.!");
+//   })
+//   .catch((err) => {
+//     console.log("Error while creating attendence table", err);
+//   });
+//  createRecordsTable()
 //   .then((res) => {
 //     console.log("Records table created successfully.!");
 //   })
@@ -191,10 +196,10 @@ app.post("/student", (req, res, next) => {
   const password = req.query.password;
   getAllStudent(rollno)
     .then((response) => {
-      // console.log(response[0]);
-      if (response[0].length == 0) throw new Error("Student not found");
+      console.log("hii",response[0]);
+      if (!response[0]) throw new Error("Student not found");
       const { id, name, rollno, password, semester, branch, year, photo } =
-        response[0][0];
+        response[0];
       // console.log(response[0][0]);
       res.json({
         id,
@@ -231,7 +236,8 @@ app.post("/teacher/createnewsubject", (req, res, next) => {
       allotedTeacher,
       year,
     } = req.body;
-    const subjectId = urid();
+    console.log(req.body)
+    const subjectId = uuidv4();
     // console.log(subjectId);
     insertIntoSubject(
       subjectId,
@@ -244,6 +250,7 @@ app.post("/teacher/createnewsubject", (req, res, next) => {
       year
     )
       .then((resp) => {
+        // console.log("tresponse", resp);
         if (resp)
           return res.json({ message: "Subject created successfully..!" });
         else throw new Error("Req failed try again..!");
@@ -263,14 +270,14 @@ app.post("/teacher", (req, res, next) => {
   // console.log(typeof teacherid, password);
   getAllTeacher(teacherid)
     .then((response) => {
-      // console.log(response[0]);
-      if (response[0].length == 0) throw new Error("Teacher not found");
-      const { id, name, teacherId, password, department, photo } =
-        response[0][0];
+      // console.log("thii", response[0]);
+      if (!response[0]) throw new Error("Teacher not found");
+      const { id, name, teacherid, password, department, photo } =
+        response[0];
       res.json({
         id,
         name,
-        teacherId,
+        teacherid,
         password,
         department,
         photo,
@@ -287,7 +294,8 @@ app.get("/allsubjects", (req, res, next) => {
   const teacherid = req.query.teacherid;
   getAllSubjects(teacherid)
     .then((resp) => {
-      const subjects = resp[0];
+      // console.log("shii",resp);
+      const subjects = resp;
       // console.log(resp[0]);
       res.json({
         subjects,
@@ -314,6 +322,7 @@ app.get("/getstudents:id", (req, res, next) => {
   const subjectid = req.params.id;
   getSubject(subjectid)
     .then((resp) => {
+      console.log(resp);
       const {
         subjectid,
         subjectname,
@@ -323,15 +332,15 @@ app.get("/getstudents:id", (req, res, next) => {
         degree,
         allotedTeacher,
         year,
-      } = resp[0][0];
+      } = resp[0];
       // console.log(semester, branch);
       req.subjectname = subjectname;
       return getAllStudents(semester, branch)
         .then((resp) => {
-          // console.log(resp);
+          // console.log("students:",resp);
           res.send({
             subjectname: req.subjectname,
-            students: resp[0],
+            students: resp,
             message: "All students fetched successfully..!",
           });
         })
@@ -362,6 +371,7 @@ app.post("/commitAttendance", (req, res, next) => {
   const array = req.body.data;
   insertattendance(array)
     .then((resp) => {
+      console.log("attendance",resp);
       res.send({ message: "All attendance saved successfully!!!" });
     })
     .catch((err) => {
@@ -374,7 +384,7 @@ app.post("/attendance", (req, res) => {
   const { subjectId, from, to } = req.body;
   getAttendance(subjectId, from, to)
     .then((resp) => {
-      // console.log(resp[0]);
+      console.log(resp[0]);
       console.log("attendance got successfully..!!");
       res.send({ list: resp, msg: "success" });
     })
