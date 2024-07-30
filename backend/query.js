@@ -463,6 +463,7 @@ async function insertattendance(data) {
 
 async function getAttendance(subjectId, from, to) {
   try {
+    console.log(subjectId, from, to);
     const client = await pool.connect();
     const query = `
       SELECT 
@@ -474,18 +475,40 @@ async function getAttendance(subjectId, from, to) {
         attendance 
       WHERE 
         subject_id = $1 
-        AND attendance_date >= $2 
-        AND attendance_date <= $3 
+        AND attendance_date >= $2::date 
+        AND attendance_date <= $3::date 
       GROUP BY 
         student_id
     `;
     const res = await client.query(query, [subjectId, from, to]);
     client.release();
-    console.log(res.rows);
+    console.log("attendance", res.rows);
     return res.rows;
   } catch (err) {
     console.error("Error while getting attendance:", err);
     throw err;
+  }
+}
+
+async function viewAttendence(subjectId) {
+  const query = `
+    SELECT 
+      student_id,
+      SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS total_present,
+      SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS total_absent,
+      COUNT(*) AS total_lectures
+    FROM attendance
+    WHERE subject_id = $1
+    GROUP BY student_id
+  `;
+
+  try {
+    const client = await pool.connect();
+    const res = await client.query(query, [subjectId]);
+    client.release(); // Release the client back to the pool
+    return res.rows;
+  } catch (err) {
+    console.error("Error while viewing Attendance:", err);
   }
 }
 module.exports = {
@@ -504,6 +527,7 @@ module.exports = {
   getAllStudent,
   getAllTeacher,
   getAttendance,
+  viewAttendence,
   getSubject,
   insertIntoSubject,
   updateSubject,

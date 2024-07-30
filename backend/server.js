@@ -382,9 +382,10 @@ app.post("/commitAttendance", (req, res, next) => {
 
 app.post("/attendance", (req, res) => {
   const { subjectId, from, to } = req.body;
+  console.log(subjectId, from, to);
   getAttendance(subjectId, from, to)
     .then((resp) => {
-      console.log(resp[0]);
+      console.log(resp);
       console.log("attendance got successfully..!!");
       res.send({ list: resp, msg: "success" });
     })
@@ -401,11 +402,10 @@ app.get("/getattendance", (req, res) => {
   //     .json({ error: "subjectId and studentid are required in headers" });
   // }
 
-  // Assuming viewAttendance is a function that returns a promise
   viewAttendence(subjectid)
     .then((resp) => {
       // Filtering response to get attendance of specific student
-      // console.log(resp);
+      console.log(resp);
       const filteredResp = resp.filter((obj) => obj.student_id === studentid);
       res.status(200).json(filteredResp);
     })
